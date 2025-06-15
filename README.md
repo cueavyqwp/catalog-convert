@@ -9,4 +9,4 @@ Inspired by [Blue-Archive-Catalog-Converter](https://github.com/endergreen12/Blu
 
 Convert MediaCatalog.bytes to MediaCatalog.json, TableCatalog.bytes to TableCatalog.json or reverse.
 
-`./catalog-convert [source_file] ['MediaCatalog'/'TableCatalog'] [output_file]`
+`./catalog-convert [source_file] [output_file]`

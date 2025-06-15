@@ -8,7 +8,6 @@ class Program
 
     static int Main(string[] args)
     {
-        var type = typeof(Types.MediaCatalog);
         string output_file = "";
         bool is_json = false;
         if (args.Length < 1)
@@ -16,15 +15,12 @@ class Program
             Console.WriteLine("At least input a catalog file.");
             return 1;
         }
-        if (args.Length >= 3)
+        if (args.Length >= 2)
         {
-            if (args[1] == "TableCatalog")
-            {
-                type = typeof(Types.TableCatalog);
-            }
             output_file = args[2];
         }
         string source_file = args[0];
+        var type = Path.GetFileNameWithoutExtension(source_file) == "TableCatalog" ? typeof(Types.TableCatalog) : typeof(Types.MediaCatalog);
         Console.WriteLine($"From:\t'{source_file}'");
         if (!File.Exists(source_file))
         {
