@@ -1,0 +1,44 @@
+name: build
+
+on:
+  push:
+    paths:
+      - "src/**"
+  pull_request:
+    paths:
+      - "src/**"
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@master
+        with:
+          submodules: recursive
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@main
+        with:
+          dotnet-version: "10.0"
+
+      - name: Build
+        run: dotnet publish ./catalog-convert --configuration Release --framework net10.0 -o ./build
+      - uses: actions/upload-artifact@main
+        with:
+          name: catalog-convert
+          path: |
+            ./build/catalog-convert.exe
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: github.ref_type == 'tag'
+        with:
+          name: Release v${{ github.ref }}
+          generate_release_notes: true
+          files: ./build/catalog-convert.exe
