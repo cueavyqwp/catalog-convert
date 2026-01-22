@@ -122,14 +122,14 @@ class Program
             InputOption,
             OutputOption
         };
-        exportCommand.Arguments.Add(new Argument<DirectoryInfo>("assets")
+        Argument<DirectoryInfo> AssetsArgument = new("assets")
         {
-            Description = "The AssetBundles directory",
+            Description = "The Assets directory (usually [MediaPatch/TableBundles])",
             DefaultValueFactory = result =>
             {
                 if (result.Tokens.Count == 0)
                 {
-                    result.AddError("AssetBundles directory is required.");
+                    result.AddError("Assets directory is required.");
                     return null!;
                 }
                 else
@@ -142,12 +142,13 @@ class Program
                     }
                     else
                     {
-                        result.AddError("AssetBundles directory does not exist.");
+                        result.AddError("Assets directory does not exist.");
                         return null!;
                     }
                 }
             }
-        });
+        };
+        exportCommand.Arguments.Add(AssetsArgument);
         rootCommand.SetAction((action) =>
         {
             Console.WriteLine("Use --help to see available commands.");
@@ -181,15 +182,15 @@ class Program
                     isJson = false;
                     Console.WriteLine("Turn format from MemoryPack to JSON...");
                 }
-                if (!Path.GetFileNameWithoutExtension(inputFile).Contains("table", StringComparison.CurrentCultureIgnoreCase))
-                {
-                    isMedia = true;
-                    Console.WriteLine("Type: MediaCatalog");
-                }
-                else
+                if (Path.GetFileNameWithoutExtension(inputFile).Contains("table", StringComparison.CurrentCultureIgnoreCase))
                 {
                     isMedia = false;
                     Console.WriteLine("Type: TableCatalog");
+                }
+                else
+                {
+                    isMedia = true;
+                    Console.WriteLine("Type: MediaCatalog");
                 }
                 if (isMedia)
                 {
@@ -218,6 +219,78 @@ class Program
                     }
                 }
                 Console.WriteLine($"Done!\nFile saved at: {outputFile}");
+            }
+            return 0;
+        });
+        exportCommand.SetAction(action =>
+        {
+            if (action.Errors.Count != 0)
+            {
+                foreach (ParseError error in action.Errors)
+                {
+                    Console.Error.WriteLine(error.Message);
+                }
+                return 1;
+            }
+            else
+            {
+                var inputFile = action.GetValue(InputOption)!.FullName;
+                var outputDir = action.GetValue(OutputOption)!.FullName;
+                var assetsDir = action.GetValue(AssetsArgument)!;
+                Dictionary<string, string> fileMap = [];
+                if (Path.GetFileNameWithoutExtension(inputFile).Contains("table", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    foreach (var item in LoadTableCatalog(inputFile).Table)
+                    {
+                        var crc = item.Value.Crc.ToString();
+                        if (fileMap.TryGetValue(crc, out string? value))
+                        {
+                            Console.WriteLine($"Warning: Same crc file: ({crc}) '{value}' '{item.Key}'");
+                            fileMap[crc] = item.Value.Name;
+                        }
+                        else
+                        {
+                            fileMap.Add(crc, item.Value.Name);
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (var item in LoadMediaCatalog(inputFile).Table)
+                    {
+                        var crc = item.Value.Crc.ToString();
+                        if (fileMap.TryGetValue(crc, out string? value))
+                        {
+                            Console.WriteLine($"Warning: Same crc file: ({crc}) '{value}' '{item.Key}'");
+                            fileMap[crc] = item.Value.Path;
+                        }
+                        else
+                        {
+                            fileMap.Add(crc, item.Value.Path);
+                        }
+                    }
+                }
+                foreach (var fileInfo in assetsDir.GetFiles())
+                {
+                    if (!fileInfo.Name.Contains('_', StringComparison.CurrentCulture))
+                    {
+                        continue;
+                    }
+                    var crc = fileInfo.Name.Split('_')[1];
+                    if (fileMap.TryGetValue(crc, out string? value))
+                    {
+                        var outputFile = Path.Join(outputDir, value);
+                        var parentDir = Path.GetDirectoryName(outputFile)!;
+                        if (!Path.Exists(parentDir))
+                        {
+                            Directory.CreateDirectory(parentDir);
+                        }
+                        Console.WriteLine($"{fileInfo.Name} => {outputFile}");
+                        File.Copy(fileInfo.FullName, outputFile, true);
+                    }
+                }
+
+                Console.WriteLine($"Done!\nFiles saved at: {outputDir}");
             }
             return 0;
         });
