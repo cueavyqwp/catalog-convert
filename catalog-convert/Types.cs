@@ -39,11 +39,13 @@ namespace Types
         public bool IsPrologue { get; set; }
         public bool IsSplitDownload { get; set; }
         public required List<string> Includes { get; set; }
+        public bool UnKnownKey { get; set; }
     }
 
     [MemoryPackable]
     public partial class TableCatalog
     {
         public required Dictionary<string, TableBundle> Table { get; set; }
+        public ulong UnKnownNumber { get; set; }
     }
 }
