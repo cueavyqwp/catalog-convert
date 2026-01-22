@@ -12,5 +12,6 @@
   <ItemGroup>
     <PackageReference Include="MemoryPack" />
     <PackageReference Include="System.CommandLine" />
+    <PackageReference Include="System.IO.Hashing" />
   </ItemGroup>
 </Project>

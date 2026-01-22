@@ -1,5 +1,6 @@
 ﻿using System.CommandLine;
 using System.CommandLine.Parsing;
+using System.IO.Hashing;
 using System.Text.Json;
 using MemoryPack;
 
@@ -66,7 +67,7 @@ class Program
             {
                 if (result.Tokens.Count == 0)
                 {
-                    result.AddError("Input file is required.");
+                    result.AddError("Input file is required");
                 }
                 else
                 {
@@ -81,7 +82,7 @@ class Program
                     }
                     else
                     {
-                        result.AddError("Input file does not exist.");
+                        result.AddError("Input file does not exist");
                     }
                 }
             });
@@ -111,6 +112,28 @@ class Program
                 return new DirectoryInfo(path);
             }
         };
+        Option<int> ThreadOption = new("--thread")
+        {
+            Description = "The max threads for copy files [1,8]",
+            DefaultValueFactory = _ => { return 4; }
+        };
+        ThreadOption.Validators.Add(result =>
+        {
+            if (result.Tokens.Count != 0)
+            {
+                var ret = int.TryParse(result.Tokens[0].Value, out int num);
+                if (!ret)
+                {
+                    result.AddError("Not a number");
+                    return;
+                }
+                if (num < 1 || num > 8)
+                {
+                    result.AddError("The number is out of range");
+                    return;
+                }
+            }
+        });
         RootCommand rootCommand = new("Catalog format converter");
         Command convertCommand = new("convert", "Convert catalog format")
         {
@@ -120,7 +143,8 @@ class Program
         Command exportCommand = new("export", "Export catalog to files")
         {
             InputOption,
-            OutputOption
+            OutputOption,
+            ThreadOption
         };
         Argument<DirectoryInfo> AssetsArgument = new("assets")
         {
@@ -237,6 +261,7 @@ class Program
                 var inputFile = action.GetValue(InputOption)!.FullName;
                 var outputDir = action.GetValue(OutputOption)!.FullName;
                 var assetsDir = action.GetValue(AssetsArgument)!;
+                var threadNum = action.GetValue(ThreadOption);
                 Dictionary<string, string> fileMap = [];
                 if (Path.GetFileNameWithoutExtension(inputFile).Contains("table", StringComparison.CurrentCultureIgnoreCase))
                 {
@@ -270,26 +295,56 @@ class Program
                         }
                     }
                 }
-                foreach (var fileInfo in assetsDir.GetFiles())
+                Parallel.ForEach(assetsDir.EnumerateFiles().ToArray(), new ParallelOptions
                 {
-                    if (!fileInfo.Name.Contains('_', StringComparison.CurrentCulture))
+                    MaxDegreeOfParallelism = threadNum
+                }, fileInfo =>
+                {
+                    var name = fileInfo.Name;
+                    var parts = name.Split('_', StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length < 2)
+                        return;
+                    var crcFromName = parts[1];
+                    if (!fileMap.TryGetValue(crcFromName, out var relativePath))
                     {
-                        continue;
+                        return;
                     }
-                    var crc = fileInfo.Name.Split('_')[1];
-                    if (fileMap.TryGetValue(crc, out string? value))
+                    var outputFile = Path.Combine(outputDir, relativePath);
+                    var parentDir = Path.GetDirectoryName(outputFile)!;
+                    Directory.CreateDirectory(parentDir);
+                    if (File.Exists(outputFile))
                     {
-                        var outputFile = Path.Join(outputDir, value);
-                        var parentDir = Path.GetDirectoryName(outputFile)!;
-                        if (!Path.Exists(parentDir))
+                        var outInfo = new FileInfo(outputFile);
+                        if (outInfo.Length == fileInfo.Length)
                         {
-                            Directory.CreateDirectory(parentDir);
+                            using var stream = File.OpenRead(outputFile);
+                            var crc32 = new Crc32(); crc32.Append(stream); var crcOut = crc32.GetCurrentHashAsUInt32().ToString();
+                            if (crcOut == crcFromName)
+                            {
+                                lock (Console.Out)
+                                {
+                                    Console.WriteLine($"Info: Skip copy '{outputFile}'");
+                                }
+                                return;
+                            }
                         }
-                        Console.WriteLine($"{fileInfo.Name} => {outputFile}");
-                        File.Copy(fileInfo.FullName, outputFile, true);
                     }
-                }
-
+                    lock (Console.Out)
+                    {
+                        Console.WriteLine($"{name} => {outputFile}");
+                    }
+                    try
+                    {
+                        File.Copy(fileInfo.FullName, outputFile, overwrite: true);
+                    }
+                    catch (Exception error)
+                    {
+                        lock (Console.Out)
+                        {
+                            Console.WriteLine($"Error: Copy failed '{outputFile}' - {error.Message}");
+                        }
+                    }
+                });
                 Console.WriteLine($"Done!\nFiles saved at: {outputDir}");
             }
             return 0;

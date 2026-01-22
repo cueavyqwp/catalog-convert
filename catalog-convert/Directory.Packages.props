@@ -7,5 +7,6 @@
   <ItemGroup>
     <PackageVersion Include="MemoryPack" Version="1.21.4" />
     <PackageVersion Include="System.CommandLine" Version="2.0.2" />
+    <PackageVersion Include="System.IO.Hashing" Version="10.0.2" />
   </ItemGroup>
 </Project>
