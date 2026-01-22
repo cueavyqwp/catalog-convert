@@ -2,9 +2,10 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
-    <NoWarn>$(NoWarn);NU1507</NoWarn>
+    <NoWarn>$(NoWarn);NU1507;IL2104</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="MemoryPack" Version="1.21.4" />
+    <PackageVersion Include="System.CommandLine" Version="2.0.2" />
   </ItemGroup>
 </Project>

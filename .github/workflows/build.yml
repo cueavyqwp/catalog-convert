@@ -17,8 +17,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@master
-        with:
-          submodules: recursive
 
       - name: Setup .NET
         uses: actions/setup-dotnet@main
@@ -26,13 +24,22 @@ jobs:
           dotnet-version: "10.0"
 
       - name: Build
-        run: dotnet publish ./catalog-convert --configuration Release --framework net10.0 -o ./build
+        run: |
+          dotnet publish ./catalog-convert --configuration Release --framework net10.0 -o ./build/win-64 -r win-x64 --self-contained true /p:PublishTrimmed=true
+          dotnet publish ./catalog-convert --configuration Release --framework net10.0 -o ./build/linux-x64 -r linux-x64 --self-contained true /p:PublishTrimmed=true
+          dotnet publish ./catalog-convert --configuration Release --framework net10.0 -o ./build/linux-arm64 -r linux-arm64 --self-contained true /p:PublishTrimmed=true
       - uses: actions/upload-artifact@main
         with:
           name: catalog-convert
           path: |
-            ./build/catalog-convert.exe
-
+            ./build
+      - name: Prepare Release
+        if: github.ref_type == 'tag'
+        run: |
+          mkdir ./build/out
+          mv ./build/win-x64/catalog-convert.exe ./build/out/catalog-convert.exe
+          mv ./build/linux-x64/catalog-convert ./build/out/catalog-convert-x64
+          mv ./build/linux-arm64/catalog-convert ./build/out/catalog-convert-arm64
       - name: Release
         uses: softprops/action-gh-release@v2
         env:
@@ -41,4 +48,7 @@ jobs:
         with:
           name: Release v${{ github.ref }}
           generate_release_notes: true
-          files: ./build/catalog-convert.exe
+          files: |
+            ./build/out/catalog-convert.exe
+            ./build/out/catalog-convert-x64
+            ./build/out/catalog-convert-arm64
