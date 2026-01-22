@@ -7,6 +7,18 @@ Inspired by [Blue-Archive-Catalog-Converter](https://github.com/endergreen12/Blu
 
 ---
 
+# Convert
+
 Convert MediaCatalog.bytes to MediaCatalog.json, TableCatalog.bytes to TableCatalog.json or reverse.
 
-`./catalog-convert [source_file] [output_file]`
+`./catalog-convert convert --input [source_file]`
+
+# Export
+
+For MediaPatch
+
+`./catalog-convert export --input [MediaCatalog.bytes/MediaCatalog.json] [BlueArchive_JP/BlueArchive_Data/StreamingAssets/MediaPatch]`
+
+For TableBundles
+
+`./catalog-convert export --input [TableCatalog.bytes/TableCatalog.json] [BlueArchive_JP/BlueArchive_Data/StreamingAssets/TableBundles]`
