@@ -19,21 +19,37 @@ Go to the [Release](https://github.com/cueavyqwp/catalog-convert/releases)
 
 You also can build by yourself ([See at here](#build))
 
-# Convert
+# Use
+
+## Help
+
+```bash
+./catalog-convert -h
+./catalog-convert -h convert
+./catalog-convert -h export
+```
+
+## Convert
 
 Convert MediaCatalog.bytes to MediaCatalog.json, TableCatalog.bytes to TableCatalog.json or reverse.
 
-`./catalog-convert convert --input [source_file]`
+```bash
+./catalog-convert convert -i [source_file]
+```
 
-# Export
+## Export
 
 For MediaPatch
 
-`./catalog-convert export --input [MediaCatalog.bytes/MediaCatalog.json] [BlueArchive_JP/BlueArchive_Data/StreamingAssets/MediaPatch]`
+```bash
+./catalog-convert export -i [MediaCatalog.bytes/MediaCatalog.json] [BlueArchive_JP/BlueArchive_Data/StreamingAssets/MediaPatch]
+```
 
 For TableBundles
 
-`./catalog-convert export --input [TableCatalog.bytes/TableCatalog.json] [BlueArchive_JP/BlueArchive_Data/StreamingAssets/TableBundles]`
+```bash
+./catalog-convert export -i [TableCatalog.bytes/TableCatalog.json] [BlueArchive_JP/BlueArchive_Data/StreamingAssets/TableBundles]
+```
 
 # Build
 

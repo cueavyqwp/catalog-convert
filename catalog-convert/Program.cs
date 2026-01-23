@@ -63,6 +63,7 @@ class Program
             Description = "The file to read",
             Required = true
         };
+        InputOption.Aliases.Add("-i");
         InputOption.Validators.Add(result =>
             {
                 if (result.Tokens.Count == 0)
@@ -112,11 +113,13 @@ class Program
                 return new DirectoryInfo(path);
             }
         };
+        OutputOption.Aliases.Add("-o");
         Option<int> ThreadOption = new("--thread")
         {
             Description = "The max threads for copy files [1,8]",
             DefaultValueFactory = _ => { return 4; }
         };
+        ThreadOption.Aliases.Add("-t");
         ThreadOption.Validators.Add(result =>
         {
             if (result.Tokens.Count != 0)
