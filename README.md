@@ -76,3 +76,10 @@ macOS
 - osx
 - unix-x64
 - unix
+
+# Thanks to
+
+- [endergreen12/Blue-Archive-Catalog-Converter](https://github.com/endergreen12/Blue-Archive-Catalog-Converter)
+- [KaniArchive/MemoryPackDumper](https://github.com/KaniArchive/MemoryPackDumper)
+- [LukeFZ/Il2CppInspectorRedux](https://github.com/LukeFZ/Il2CppInspectorRedux)
+- [Deathemonic/BA-AX](https://github.com/Deathemonic/BA-AX)
