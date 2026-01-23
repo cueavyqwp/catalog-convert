@@ -2,14 +2,13 @@ using MemoryPack;
 
 namespace Types
 {
-    public enum MediaType
+    public enum MediaType : int
     {
         None = 0,
         Audio = 1,
         Video = 2,
         Texture = 3
     }
-
     [MemoryPackable]
     public partial class Media
     {
@@ -27,7 +26,6 @@ namespace Types
     {
         public required Dictionary<string, Media> Table { get; set; }
     }
-
     [MemoryPackable]
     public partial class TableBundle
     {
@@ -39,13 +37,22 @@ namespace Types
         public bool IsPrologue { get; set; }
         public bool IsSplitDownload { get; set; }
         public required List<string> Includes { get; set; }
-        public bool UnKnownKey { get; set; }
+    }
+
+    [MemoryPackable]
+    public partial class TablePatchPack
+    {
+        public required string Name { get; set; }
+        public long Size { get; set; }
+        public long Crc { get; set; }
+        public bool IsPrologue { get; set; }
+        public required TableBundle[] BundleFiles { get; set; }
     }
 
     [MemoryPackable]
     public partial class TableCatalog
     {
         public required Dictionary<string, TableBundle> Table { get; set; }
-        public ulong UnKnownNumber { get; set; }
+        public required Dictionary<string, TablePatchPack> TablePack { get; set; }
     }
 }

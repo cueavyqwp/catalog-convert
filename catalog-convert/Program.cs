@@ -278,6 +278,24 @@ class Program
                             fileMap.Add(crc, item.Value.Name);
                         }
                     }
+                    foreach (var items in LoadTableCatalog(inputFile).TablePack)
+                    {
+                        var dirName = items.Key.Replace(".zip", "");
+                        foreach (var item in items.Value.BundleFiles)
+                        {
+                            var fileName = Path.Join(dirName, item.Name);
+                            var crc = item.Crc.ToString();
+                            if (fileMap.TryGetValue(crc, out string? value))
+                            {
+                                Console.WriteLine($"Warning: Same crc file: ({crc}) '{value}' '{fileName}'");
+                                fileMap[crc] = fileName;
+                            }
+                            else
+                            {
+                                fileMap.Add(crc, fileName);
+                            }
+                        }
+                    }
                 }
                 else
                 {
