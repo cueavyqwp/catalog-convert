@@ -119,6 +119,16 @@ class Program
             Description = "The max threads for copy files [1,8]",
             DefaultValueFactory = _ => { return 4; }
         };
+        Option<bool> DetailOption = new("--detail")
+        {
+            Description = "Show detail log when export",
+            DefaultValueFactory = _ => { return false; }
+        };
+        Option<bool> SkipCrcOption = new("--skip-crc")
+        {
+            Description = "Skip CRC check when export",
+            DefaultValueFactory = _ => { return false; }
+        };
         ThreadOption.Aliases.Add("-t");
         ThreadOption.Validators.Add(result =>
         {
@@ -147,7 +157,9 @@ class Program
         {
             InputOption,
             OutputOption,
-            ThreadOption
+            ThreadOption,
+            DetailOption,
+            SkipCrcOption
         };
         Argument<DirectoryInfo> AssetsArgument = new("assets")
         {
@@ -265,7 +277,10 @@ class Program
                 var outputDir = action.GetValue(OutputOption)!.FullName;
                 var assetsDir = action.GetValue(AssetsArgument)!;
                 var threadNum = action.GetValue(ThreadOption);
+                var showDetail = action.GetValue(DetailOption);
+                var skipCrc = action.GetValue(SkipCrcOption);
                 Dictionary<string, string> fileMap = [];
+                Console.WriteLine($"Detail log: {(showDetail ? "ON" : "OFF")}");
                 if (Path.GetFileNameWithoutExtension(inputFile).Contains("table", StringComparison.CurrentCultureIgnoreCase))
                 {
                     foreach (var item in LoadTableCatalog(inputFile).Table)
@@ -273,8 +288,7 @@ class Program
                         var crc = item.Value.Crc.ToString();
                         if (fileMap.TryGetValue(crc, out string? value))
                         {
-                            Console.WriteLine($"Warning: Same crc file: ({crc}) '{value}' '{item.Key}'");
-                            fileMap[crc] = item.Value.Name;
+                            fileMap[crc] += $";{item.Value.Name}";
                         }
                         else
                         {
@@ -290,8 +304,7 @@ class Program
                             var crc = item.Crc.ToString();
                             if (fileMap.TryGetValue(crc, out string? value))
                             {
-                                Console.WriteLine($"Warning: Same crc file: ({crc}) '{value}' '{fileName}'");
-                                fileMap[crc] = fileName;
+                                fileMap[crc] += $";{fileName}";
                             }
                             else
                             {
@@ -307,8 +320,7 @@ class Program
                         var crc = item.Value.Crc.ToString();
                         if (fileMap.TryGetValue(crc, out string? value))
                         {
-                            Console.WriteLine($"Warning: Same crc file: ({crc}) '{value}' '{item.Key}'");
-                            fileMap[crc] = item.Value.Path;
+                            fileMap[crc] += $";{item.Value.Path}";
                         }
                         else
                         {
@@ -326,43 +338,65 @@ class Program
                     if (parts.Length < 2)
                         return;
                     var crcFromName = parts[1];
-                    if (!fileMap.TryGetValue(crcFromName, out var relativePath))
+                    if (!fileMap.TryGetValue(crcFromName, out var relativePaths))
                     {
                         return;
                     }
-                    var outputFile = Path.Combine(outputDir, relativePath);
-                    var parentDir = Path.GetDirectoryName(outputFile)!;
-                    Directory.CreateDirectory(parentDir);
-                    if (File.Exists(outputFile))
+                    foreach (var relativePath in relativePaths.Split(';', StringSplitOptions.RemoveEmptyEntries))
                     {
-                        var outInfo = new FileInfo(outputFile);
-                        if (outInfo.Length == fileInfo.Length)
+                        Console.WriteLine(relativePath);
+                        var outputFile = Path.Combine(outputDir, relativePath);
+                        var parentDir = Path.GetDirectoryName(outputFile)!;
+                        if (!Directory.Exists(parentDir))
                         {
-                            using var stream = File.OpenRead(outputFile);
-                            var crc32 = new Crc32(); crc32.Append(stream); var crcOut = crc32.GetCurrentHashAsUInt32().ToString();
-                            if (crcOut == crcFromName)
+                            Directory.CreateDirectory(parentDir);
+                        }
+                        if (File.Exists(outputFile))
+                        {
+                            var skip = false;
+                            if (skipCrc)
                             {
-                                lock (Console.Out)
+                                skip = true;
+                            }
+                            else
+                            {
+                                var outInfo = new FileInfo(outputFile);
+                                if (outInfo.Length == fileInfo.Length)
                                 {
-                                    Console.WriteLine($"Info: Skip copy '{outputFile}'");
+                                    using var stream = File.OpenRead(outputFile);
+                                    var crc32 = new Crc32(); crc32.Append(stream); var crcOut = crc32.GetCurrentHashAsUInt32().ToString();
+                                    if (showDetail && crcOut == crcFromName)
+                                    {
+                                        skip = true;
+                                    }
                                 }
-                                return;
+                            }
+                            if (skip)
+                            {
+                                if (showDetail)
+                                {
+                                    lock (Console.Out)
+                                    {
+                                        Console.WriteLine($"Info: Skip copy '{outputFile}'");
+                                    }
+                                }
+                                continue;
                             }
                         }
-                    }
-                    lock (Console.Out)
-                    {
-                        Console.WriteLine($"{name} => {outputFile}");
-                    }
-                    try
-                    {
-                        File.Copy(fileInfo.FullName, outputFile, overwrite: true);
-                    }
-                    catch (Exception error)
-                    {
                         lock (Console.Out)
                         {
-                            Console.WriteLine($"Error: Copy failed '{outputFile}' - {error.Message}");
+                            Console.WriteLine($"{name} => {outputFile}");
+                        }
+                        try
+                        {
+                            File.Copy(fileInfo.FullName, outputFile, overwrite: true);
+                        }
+                        catch (Exception error)
+                        {
+                            lock (Console.Out)
+                            {
+                                Console.WriteLine($"Error: Copy failed '{outputFile}' - {error.Message}");
+                            }
                         }
                     }
                 });
