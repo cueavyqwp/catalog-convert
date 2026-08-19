@@ -38,8 +38,8 @@ jobs:
         run: |
           mkdir ./build/out
           mv ./build/win-x64/catalog-convert.exe ./build/out/catalog-convert.exe
-          mv ./build/linux-x64/catalog-convert ./build/out/catalog-convert-x64
-          mv ./build/linux-arm64/catalog-convert ./build/out/catalog-convert-arm64
+          mv ./build/linux-x64/catalog-convert ./build/out/catalog-convert-linux-x64
+          mv ./build/linux-arm64/catalog-convert ./build/out/catalog-convert-linux-arm64
       - name: Release
         uses: softprops/action-gh-release@v2
         env:
@@ -50,5 +50,5 @@ jobs:
           generate_release_notes: true
           files: |
             ./build/out/catalog-convert.exe
-            ./build/out/catalog-convert-x64
-            ./build/out/catalog-convert-arm64
+            ./build/out/catalog-convert-linux-x64
+            ./build/out/catalog-convert-linux-arm64

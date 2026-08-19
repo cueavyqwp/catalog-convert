@@ -13,9 +13,9 @@ Go to the [Release](https://github.com/cueavyqwp/catalog-convert/releases)
 
 `catalog-convert.exe` is for Windows x64
 
-`catalog-convert-x64` is for Linux x64
+`catalog-convert-linux-x64` is for Linux x64
 
-`catalog-convert-arm64` is for Linux arm64
+`catalog-convert-linux-arm64` is for Linux arm64
 
 You also can build by yourself ([See at here](#build))
 
@@ -77,7 +77,7 @@ macOS
 - unix-x64
 - unix
 
-# Thanks to
+# References
 
 - [endergreen12/Blue-Archive-Catalog-Converter](https://github.com/endergreen12/Blue-Archive-Catalog-Converter)
 - [KaniArchive/MemoryPackDumper](https://github.com/KaniArchive/MemoryPackDumper)

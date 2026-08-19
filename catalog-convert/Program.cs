@@ -233,28 +233,30 @@ class Program
                 }
                 if (isMedia)
                 {
+                    var catalog = LoadMediaCatalog(inputFile);
                     if (isJson)
                     {
                         outputFile = Path.Join(outputDir, "MediaCatalog.bytes");
-                        SaveMediaCatalogToMemoryPack(LoadMediaCatalog(inputFile), outputFile);
+                        SaveMediaCatalogToMemoryPack(catalog, outputFile);
                     }
                     else
                     {
                         outputFile = Path.Join(outputDir, "MediaCatalog.json");
-                        SaveMediaCatalogToJson(LoadMediaCatalog(inputFile), outputFile);
+                        SaveMediaCatalogToJson(catalog, outputFile);
                     }
                 }
                 else
                 {
+                    var catalog = LoadTableCatalog(inputFile);
                     if (isJson)
                     {
                         outputFile = Path.Join(outputDir, "TableCatalog.bytes");
-                        SaveTableCatalogToMemoryPack(LoadTableCatalog(inputFile), outputFile);
+                        SaveTableCatalogToMemoryPack(catalog, outputFile);
                     }
                     else
                     {
                         outputFile = Path.Join(outputDir, "TableCatalog.json");
-                        SaveTableCatalogToJson(LoadTableCatalog(inputFile), outputFile);
+                        SaveTableCatalogToJson(catalog, outputFile);
                     }
                 }
                 Console.WriteLine($"Done!\nFile saved at: {outputFile}");
@@ -280,7 +282,10 @@ class Program
                 var showDetail = action.GetValue(DetailOption);
                 var skipCrc = action.GetValue(SkipCrcOption);
                 Dictionary<string, string> fileMap = [];
-                Console.WriteLine($"Detail log: {(showDetail ? "ON" : "OFF")}");
+                if (showDetail)
+                {
+                    Console.WriteLine($"Detail log: ON");
+                }
                 if (Path.GetFileNameWithoutExtension(inputFile).Contains("table", StringComparison.CurrentCultureIgnoreCase))
                 {
                     foreach (var item in LoadTableCatalog(inputFile).Table)
